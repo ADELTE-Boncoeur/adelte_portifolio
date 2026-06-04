@@ -201,6 +201,22 @@ body {
 .hero-subtitle { animation: subtitlePulse 4s ease-in-out infinite; }
 .hero-shadow { animation: shadowPulse 4s ease-in-out infinite; }
 
+.logo-marquee {
+  overflow: hidden;
+}
+.logo-marquee-track {
+  display: flex;
+  gap: 1.5rem;
+  animation: marquee 30s linear infinite;
+}
+.logo-marquee-track:hover {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 [data-theme="dark"] #top, [data-theme="neon"] #top, [data-theme="forest"] #top {
   --paper-bg: var(--bg-3);
   --paper-line: #1e293b;
