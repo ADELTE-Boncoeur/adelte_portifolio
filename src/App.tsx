@@ -25,7 +25,6 @@ const CURSORS: Array<{ id: Cursor; name: string; preview: string }> = [
   { id: 'grab', name: 'Grab', preview: 'M11 4 V18 H8 V22 H24 V18 H21 V4' }
 ];
 
-// Simple UI translations (translate the *interface* of the page, not full content)
 const I18N: Record<LangCode, Record<string, string>> = {
   en: { hero: 'Building the Future Through Code', tagline: 'Software Developer • AI Builder • Platform Architect', viewProjects: 'View 12 Projects', writeRun: 'Write & Run Code', download: 'Download Resume', search: 'Search AdelTe Industries...' },
   fr: { hero: 'Construire l\'Avenir Grâce au Code', tagline: 'Développeur • Créateur d\'IA • Architecte Plateforme', viewProjects: 'Voir 12 Projets', writeRun: 'Écrire & Exécuter', download: 'Télécharger CV', search: 'Rechercher AdelTe Industries...' },
@@ -67,12 +66,7 @@ const CODE_LOGOS = [
   { name: 'CSS', src: 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/css3.svg' }
 ];
 
-const EXTERNAL_LINKS = [
-  { name: 'Kivu Luxury', href: 'http://luxury-properties-eta.vercel.app/' },
-  { name: 'Visit Rwanda', href: 'https://visitrwanda-seven.vercel.app/' },
-  { name: 'Projects', href: '#projects' }
-];
-
+// ✅ EXTERNAL LINKS — Visit Rwanda NOT on navbar, only used in projects
 const SPOKEN_LANGUAGES = [
   { name: 'English', flag: '🇬🇧' },
   { name: 'Kinyarwanda', flag: '🇷🇼' },
@@ -80,14 +74,12 @@ const SPOKEN_LANGUAGES = [
   { name: 'Español', flag: '🇪🇸' }
 ];
 
-// Map our codes to Google Translate codes
 const GTRANS_CODES: Record<LangCode, string> = {
   en: 'en', fr: 'fr', rw: 'rw', es: 'es', ar: 'ar', zh: 'zh-CN', pt: 'pt', de: 'de', sw: 'sw', hi: 'hi'
 };
 
 function setGoogleTranslateCookie(target: string) {
   const value = target === 'en' ? '' : `/en/${target}`;
-  // set for current host + all variations so widget picks it up
   const expire = 'expires=' + new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toUTCString();
   document.cookie = `googtrans=${value}; path=/; ${expire}`;
   try {
@@ -96,16 +88,12 @@ function setGoogleTranslateCookie(target: string) {
   } catch {}
 }
 
-// Load Google Translate once
 function ensureGoogleTranslate() {
   if (document.getElementById('google-translate-script')) return;
   (window as any).googleTranslateElementInit = function () {
     try {
       // @ts-ignore
-      new window.google.translate.TranslateElement(
-        { pageLanguage: 'en', autoDisplay: false },
-        'google_translate_element'
-      );
+      new window.google.translate.TranslateElement({ pageLanguage: 'en', autoDisplay: false }, 'google_translate_element');
     } catch {}
   };
   const s = document.createElement('script');
@@ -118,7 +106,6 @@ function ensureGoogleTranslate() {
 function applyGoogleTranslate(code: LangCode) {
   const target = GTRANS_CODES[code];
   setGoogleTranslateCookie(target);
-  // Try to drive the hidden combo if it exists, else reload to apply cookie
   const trySelect = (attempt = 0) => {
     const combo = document.querySelector<HTMLSelectElement>('.goog-te-combo');
     if (combo) {
@@ -127,12 +114,10 @@ function applyGoogleTranslate(code: LangCode) {
     } else if (attempt < 20) {
       setTimeout(() => trySelect(attempt + 1), 250);
     } else {
-      // fallback: reload so cookie takes effect
       window.location.reload();
     }
   };
   if (target === 'en') {
-    // reset to original
     window.location.reload();
   } else {
     trySelect();
@@ -163,7 +148,7 @@ function useTheme() {
 }
 
 // ————————————————————————————————————
-// SCROLL SPY — track which section is in view
+// SCROLL SPY
 // ————————————————————————————————————
 function useScrollSpy(ids: string[]) {
   const [active, setActive] = useState<string>(ids[0] || '');
@@ -189,20 +174,336 @@ function useScrollSpy(ids: string[]) {
 }
 
 // ————————————————————————————————————
-// 3D TILT CARD WRAPPER
+// INFINITE CODE WRITER — shows dev info with syntax highlighting colors, loops forever
 // ————————————————————————————————————
-function Tilt3D({ children, className='' }:{ children: React.ReactNode; className?:string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const onMove = (e:React.MouseEvent)=>{
-    const el = ref.current; if(!el) return;
-    const r = el.getBoundingClientRect();
-    const mx = (e.clientX - r.left)/r.width - 0.5;
-    const my = (e.clientY - r.top)/r.height - 0.5;
-    el.style.transform = `rotateX(${(-my*12).toFixed(2)}deg) rotateY(${(mx*14).toFixed(2)}deg) scale(1.03)`;
-  };
-  const onLeave = ()=>{ const el = ref.current; if (el) el.style.transform = 'rotateX(0) rotateY(0) scale(1)'; };
+const CODE_LINES = [
+  { text: `const developer = {`, color: '#c792ea' },
+  { text: `  name: "ADELTE Boncoeur",`, color: '#82aaff' },
+  { text: `  title: "Software Developer",`, color: '#c3e88d' },
+  { text: `  location: "Rwanda 🇷🇼",`, color: '#ffcb6b' },
+  { text: `  email: "mloaze778@gmail.com",`, color: '#f78c6c' },
+  { text: `  phone: "0722635461",`, color: '#89ddff' },
+  { text: `  github: "ADELTE-Boncoeur",`, color: '#c3e88d' },
+  { text: `  year: 2026,`, color: '#ffcb6b' },
+  { text: `};`, color: '#c792ea' },
+  { text: ``, color: '#fff' },
+  { text: `const skills = [`, color: '#c792ea' },
+  { text: `  "React", "TypeScript",`, color: '#c3e88d' },
+  { text: `  "Node.js", "Python",`, color: '#c3e88d' },
+  { text: `  "AI Systems", "Cloud",`, color: '#c3e88d' },
+  { text: `  "UI/UX Design",`, color: '#c3e88d' },
+  { text: `];`, color: '#c792ea' },
+  { text: ``, color: '#fff' },
+  { text: `const projects = 12;`, color: '#89ddff' },
+  { text: `const passion = Infinity;`, color: '#ff5370' },
+  { text: ``, color: '#fff' },
+  { text: `function buildFuture() {`, color: '#82aaff' },
+  { text: `  // Rwanda → Global 🌍`, color: '#546e7a' },
+  { text: `  return "excellence";`, color: '#c3e88d' },
+  { text: `}`, color: '#82aaff' },
+  { text: ``, color: '#fff' },
+  { text: `// Languages spoken:`, color: '#546e7a' },
+  { text: `// 🇬🇧 English`, color: '#ffcb6b' },
+  { text: `// 🇷🇼 Kinyarwanda`, color: '#ffcb6b' },
+  { text: `// 🇫🇷 Français`, color: '#ffcb6b' },
+  { text: `// 🇪🇸 Español`, color: '#ffcb6b' },
+  { text: ``, color: '#fff' },
+  { text: `console.log("Welcome to", developer.name);`, color: '#89ddff' },
+  { text: `// → "Welcome to ADELTE Boncoeur"`, color: '#546e7a' },
+  { text: ``, color: '#fff' },
+  { text: `export default developer;`, color: '#c792ea' },
+  { text: ``, color: '#fff' },
+];
+
+function InfiniteCodeWriter() {
+  const [visibleLines, setVisibleLines] = useState<number>(0);
+  const [charInLine, setCharInLine] = useState<number>(0);
+  const [cycle, setCycle] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let lineIdx = 0;
+    let charIdx = 0;
+    let running = true;
+
+    const tick = () => {
+      if (!running) return;
+      const allLines = CODE_LINES;
+      const currentLine = allLines[lineIdx];
+      if (!currentLine) return;
+
+      if (charIdx <= currentLine.text.length) {
+        setVisibleLines(lineIdx);
+        setCharInLine(charIdx);
+        charIdx++;
+        setTimeout(tick, currentLine.text.length === 0 ? 80 : 35);
+      } else {
+        lineIdx++;
+        charIdx = 0;
+        if (lineIdx >= allLines.length) {
+          // pause then restart
+          setTimeout(() => {
+            lineIdx = 0;
+            charIdx = 0;
+            setCycle(c => c + 1);
+            setVisibleLines(0);
+            setCharInLine(0);
+            tick();
+          }, 1800);
+        } else {
+          setTimeout(tick, 50);
+        }
+      }
+    };
+
+    tick();
+    return () => { running = false; };
+  }, [cycle]);
+
+  // Auto scroll
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
+  }, [visibleLines, charInLine]);
+
   return (
-    <div ref={ref} onMouseMove={onMove} onMouseLeave={onLeave} style={{perspective:'900px', transition:'transform 0.2s', transformStyle:'preserve-3d'}} className={className}>
+    <div
+      ref={containerRef}
+      style={{
+        background: '#0d1117',
+        borderRadius: '16px',
+        padding: '16px',
+        fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", monospace',
+        fontSize: '11px',
+        lineHeight: '1.7',
+        height: '320px',
+        overflowY: 'hidden',
+        border: '1px solid #30363d',
+        boxShadow: '0 0 30px rgba(99,102,241,0.15), inset 0 0 30px rgba(0,0,0,0.3)',
+        position: 'relative',
+      }}
+    >
+      {/* Editor top bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid #21262d' }}>
+        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f57' }} />
+        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#febc2e' }} />
+        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#28c840' }} />
+        <span style={{ marginLeft: 8, color: '#8b949e', fontSize: '9px', letterSpacing: '0.1em' }}>adelte.ts — ADELTE Industries</span>
+      </div>
+
+      {/* Line numbers + code */}
+      <div style={{ display: 'flex', gap: '12px' }}>
+        {/* Line numbers */}
+        <div style={{ color: '#30363d', textAlign: 'right', minWidth: '20px', userSelect: 'none' }}>
+          {CODE_LINES.slice(0, visibleLines + 1).map((_, i) => (
+            <div key={i}>{i + 1}</div>
+          ))}
+        </div>
+        {/* Code content */}
+        <div style={{ flex: 1 }}>
+          {CODE_LINES.slice(0, visibleLines).map((line, i) => (
+            <div key={`${cycle}-${i}`} style={{ color: line.color, whiteSpace: 'pre' }}>
+              {line.text || '\u00a0'}
+            </div>
+          ))}
+          {/* Currently typing line */}
+          {visibleLines < CODE_LINES.length && (
+            <div style={{ color: CODE_LINES[visibleLines].color, whiteSpace: 'pre' }}>
+              {CODE_LINES[visibleLines].text.substring(0, charInLine)}
+              <span style={{
+                display: 'inline-block',
+                width: '2px',
+                height: '13px',
+                background: '#58a6ff',
+                verticalAlign: 'text-bottom',
+                animation: 'blink 1s step-end infinite',
+              }} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Blink keyframe via style tag */}
+      <style>{`@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }`}</style>
+    </div>
+  );
+}
+
+// ————————————————————————————————————
+// INFINITE CODE WRITER — full height version, sits beside photo
+// ————————————————————————————————————
+function InfiniteCodeWriterFull() {
+  const [visibleLines, setVisibleLines] = useState<number>(0);
+  const [charInLine, setCharInLine] = useState<number>(0);
+  const [cycle, setCycle] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const runningRef = useRef(true);
+
+  useEffect(() => {
+    runningRef.current = true;
+    let lineIdx = 0;
+    let charIdx = 0;
+
+    const tick = () => {
+      if (!runningRef.current) return;
+      const currentLine = CODE_LINES[lineIdx];
+      if (!currentLine) return;
+
+      if (charIdx <= currentLine.text.length) {
+        setVisibleLines(lineIdx);
+        setCharInLine(charIdx);
+        charIdx++;
+        setTimeout(tick, currentLine.text.length === 0 ? 60 : 28);
+      } else {
+        lineIdx++;
+        charIdx = 0;
+        if (lineIdx >= CODE_LINES.length) {
+          setTimeout(() => {
+            if (!runningRef.current) return;
+            lineIdx = 0;
+            charIdx = 0;
+            setCycle(c => c + 1);
+            setVisibleLines(0);
+            setCharInLine(0);
+            tick();
+          }, 1600);
+        } else {
+          setTimeout(tick, 40);
+        }
+      }
+    };
+
+    tick();
+    return () => { runningRef.current = false; };
+  }, [cycle]);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
+  }, [visibleLines, charInLine]);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        background: 'transparent',
+        borderRadius: 0,
+        padding: '12px 14px 12px 10px',
+        fontFamily: '"Fira Code","Cascadia Code","JetBrains Mono",monospace',
+        fontSize: '10px',
+        lineHeight: '1.6',
+        width: '100%',
+        height: '100%',
+        overflowY: 'hidden',
+        border: 'none',
+        boxShadow: 'none',
+        position: 'relative',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {/* Editor top bar */}
+      <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'10px', paddingBottom:'8px', borderBottom:'1px solid #21262d' }}>
+        <div style={{ width:9, height:9, borderRadius:'50%', background:'#ff5f57' }} />
+        <div style={{ width:9, height:9, borderRadius:'50%', background:'#febc2e' }} />
+        <div style={{ width:9, height:9, borderRadius:'50%', background:'#28c840' }} />
+        <span style={{ marginLeft:8, color:'#8b949e', fontSize:'9px', letterSpacing:'0.12em' }}>adelte.ts</span>
+        <span style={{ marginLeft:'auto', color:'#3fb950', fontSize:'9px', letterSpacing:'0.08em' }}>● LIVE</span>
+      </div>
+
+      {/* Line numbers + code */}
+      <div style={{ display:'flex', gap:'10px', flex: 1, overflow: 'hidden' }}>
+        {/* Line numbers */}
+        <div style={{ color:'#3d444d', textAlign:'right', minWidth:'18px', userSelect:'none', flexShrink:0 }}>
+          {CODE_LINES.slice(0, visibleLines + 1).map((_, i) => (
+            <div key={i} style={{ lineHeight:'1.65' }}>{i + 1}</div>
+          ))}
+        </div>
+
+        {/* Code */}
+        <div style={{ flex:1, overflow:'hidden' }}>
+          {CODE_LINES.slice(0, visibleLines).map((line, i) => (
+            <div key={`${cycle}-${i}`} style={{ color: line.color, whiteSpace:'pre', lineHeight:'1.65' }}>
+              {line.text || '\u00a0'}
+            </div>
+          ))}
+          {visibleLines < CODE_LINES.length && (
+            <div style={{ color: CODE_LINES[visibleLines].color, whiteSpace:'pre', lineHeight:'1.65' }}>
+              {CODE_LINES[visibleLines].text.substring(0, charInLine)}
+              <span style={{
+                display:'inline-block', width:'1.5px', height:'12px',
+                background:'#58a6ff', verticalAlign:'text-bottom',
+                animation:'blink 1s step-end infinite',
+              }} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <style>{`@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}`}</style>
+    </div>
+  );
+}
+
+// ————————————————————————————————————
+// TYPEWRITER (hero subtitle)
+// ————————————————————————————————————
+function TypeWriter() {
+  const [displayText, setDisplayText] = useState('');
+  const fullText = `fullstack engineer\nbuilding AI systems\nplatforms & design`;
+  const [charIndex, setCharIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [loopNum, setLoopNum] = useState(0);
+  const [typingSpeed, setTypingSpeed] = useState(80);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const isLastChar = charIndex === fullText.length;
+      if (isLastChar) {
+        setIsDeleting(true);
+        setTypingSpeed(1500);
+      } else if (charIndex === 0 && isDeleting) {
+        setIsDeleting(false);
+        setLoopNum(loopNum + 1);
+        setTypingSpeed(300);
+      }
+      let newIndex = charIndex;
+      if (isDeleting && charIndex > 0) { newIndex = charIndex - 1; setTypingSpeed(30); }
+      else if (!isDeleting && charIndex < fullText.length) { newIndex = charIndex + 1; setTypingSpeed(80); }
+      setCharIndex(newIndex);
+      setDisplayText(fullText.substring(0, newIndex));
+    }, typingSpeed);
+    return () => clearTimeout(timer);
+  }, [charIndex, isDeleting, fullText, typingSpeed, loopNum]);
+
+  return (
+    <div className="font-mono text-[11px] leading-relaxed text-slate-700 min-h-[60px] whitespace-pre-wrap">
+      <span>{displayText}</span>
+      <span className="animate-pulse">▌</span>
+    </div>
+  );
+}
+
+// ————————————————————————————————————
+// TILT 3D
+// ————————————————————————————————————
+function Tilt3D({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const onMove = (e: React.MouseEvent) => {
+    const el = ref.current; if (!el) return;
+    const r = el.getBoundingClientRect();
+    const mx = (e.clientX - r.left) / r.width - 0.5;
+    const my = (e.clientY - r.top) / r.height - 0.5;
+    el.style.transform = `rotateX(${(-my * 12).toFixed(2)}deg) rotateY(${(mx * 14).toFixed(2)}deg) scale(1.03)`;
+  };
+  const onLeave = () => { const el = ref.current; if (el) el.style.transform = 'rotateX(0) rotateY(0) scale(1)'; };
+  return (
+    <div ref={ref} onMouseMove={onMove} onMouseLeave={onLeave}
+      style={{ perspective: '900px', transition: 'transform 0.2s', transformStyle: 'preserve-3d' }}
+      className={className}>
       {children}
     </div>
   );
@@ -229,14 +530,13 @@ const IMG = {
 };
 
 // ————————————————————————————————————
-// NAVBAR ITEMS — Each has a vector/icon (SVG), real logo URL revealed on hover
+// NAVBAR ITEMS — ONLY About, Skills, Projects, Contact
+// ✅ NO Visit Rwanda or Kivu Luxury on navbar
 // ————————————————————————————————————
 type NavItem = {
   href: string;
   name: string;
-  // Pure SVG vector (always visible)
   svg: React.ReactNode;
-  // Real "official" logo image that appears on hover
   logo: string;
 };
 
@@ -264,9 +564,9 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 // ————————————————————————————————————
-// NAVBAR — Icon-only, hover reveals real official logo + name
+// THEME COG
 // ————————————————————————————————————
-function ThemeCog({ theme, setTheme, cursor, setCursor, lang, setLang }:{ theme: Theme; setTheme:(t:Theme)=>void; cursor: Cursor; setCursor:(c:Cursor)=>void; lang: LangCode; setLang:(l:LangCode)=>void }) {
+function ThemeCog({ theme, setTheme, cursor, setCursor, lang, setLang }: { theme: Theme; setTheme: (t: Theme) => void; cursor: Cursor; setCursor: (c: Cursor) => void; lang: LangCode; setLang: (l: LangCode) => void }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<'theme' | 'cursor' | 'lang'>('theme');
   return (
@@ -341,8 +641,11 @@ function ThemeCog({ theme, setTheme, cursor, setCursor, lang, setLang }:{ theme:
   );
 }
 
-function Navbar({ onDownloadResume }:{ onDownloadResume:()=>void }) {
-  const [hovered, setHovered] = useState<number|null>(null);
+// ————————————————————————————————————
+// NAVBAR — Only About / Skills / Projects / Contact
+// ————————————————————————————————————
+function Navbar({ onDownloadResume }: { onDownloadResume: () => void }) {
+  const [hovered, setHovered] = useState<number | null>(null);
   const { theme, setTheme, cursor, setCursor, lang, setLang } = useTheme();
   const sectionIds = NAV_ITEMS.map(n => n.href.replace('#', ''));
   const activeId = useScrollSpy(sectionIds);
@@ -356,73 +659,63 @@ function Navbar({ onDownloadResume }:{ onDownloadResume:()=>void }) {
           </div>
         </a>
 
-        <div className="hidden lg:flex items-center gap-2">
-          {EXTERNAL_LINKS.map(link => (
-            <a key={link.name} href={link.href} target={link.href.startsWith('http') ? '_blank' : '_self'} rel={link.href.startsWith('http') ? 'noreferrer' : undefined} className="rounded-full border border-slate-300 bg-white/90 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">
-              {link.name}
-            </a>
-          ))}
-        </div>
-
+        {/* ✅ NAV — only 4 internal links, NO external links here */}
         <nav className="hidden md:flex items-center gap-1">
           {NAV_ITEMS.map((item, i) => {
             const isActive = item.href.replace('#', '') === activeId;
             return (
-            <a
-              key={item.name}
-              href={item.href}
-              onMouseEnter={() => setHovered(i)}
-              onMouseLeave={() => setHovered(null)}
-              className="relative w-11 h-11 flex items-center justify-center rounded-xl transition-all group"
-              style={{ color: isActive ? '#fff' : 'var(--text-2)', background: isActive ? 'var(--accent)' : 'transparent' }}
-              title={item.name}
-            >
-              <motion.div
-                animate={{ opacity: hovered === i ? 0 : 1, scale: hovered === i ? 0.6 : 1 }}
-                transition={{ duration: 0.2 }}
-                className="absolute w-5 h-5"
+              <a
+                key={item.name}
+                href={item.href}
+                onMouseEnter={() => setHovered(i)}
+                onMouseLeave={() => setHovered(null)}
+                className="relative w-11 h-11 flex items-center justify-center rounded-xl transition-all group"
+                style={{ color: isActive ? '#fff' : 'var(--text-2)', background: isActive ? 'var(--accent)' : 'transparent' }}
+                title={item.name}
               >
-                {item.svg}
-              </motion.div>
+                <motion.div
+                  animate={{ opacity: hovered === i ? 0 : 1, scale: hovered === i ? 0.6 : 1 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute w-5 h-5"
+                >
+                  {item.svg}
+                </motion.div>
 
-              <motion.img
-                src={item.logo}
-                alt={item.name}
-                initial={false}
-                animate={{ opacity: hovered === i ? 1 : 0, scale: hovered === i ? 1 : 0.6 }}
-                transition={{ duration: 0.25 }}
-                className="absolute w-6 h-6 object-contain"
-              />
+                <motion.img
+                  src={item.logo}
+                  alt={item.name}
+                  initial={false}
+                  animate={{ opacity: hovered === i ? 1 : 0, scale: hovered === i ? 1 : 0.6 }}
+                  transition={{ duration: 0.25 }}
+                  className="absolute w-6 h-6 object-contain"
+                />
 
-              {/* Active indicator dot */}
-              {isActive && (
-                <motion.div layoutId="navActiveDot" className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full" style={{ background: '#fff' }} />
-              )}
-
-              {/* Tooltip: shows name when hovered OR when this is the active section */}
-              <AnimatePresence>
-                {(hovered === i || (isActive && hovered === null)) && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-full mt-2 px-3 py-1 text-[10px] font-bold rounded-full whitespace-nowrap tracking-widest uppercase pointer-events-none shadow-lg flex items-center gap-1"
-                    style={{ background: 'var(--accent)', color: '#fff' }}
-                  >
-                    {isActive && hovered === null && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
-                    {isActive && hovered === null ? `You are here: ${item.name}` : item.name}
-                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45" style={{ background: 'var(--accent)' }} />
-                  </motion.div>
+                {isActive && (
+                  <motion.div layoutId="navActiveDot" className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full" style={{ background: '#fff' }} />
                 )}
-              </AnimatePresence>
-            </a>
+
+                <AnimatePresence>
+                  {(hovered === i || (isActive && hovered === null)) && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute top-full mt-2 px-3 py-1 text-[10px] font-bold rounded-full whitespace-nowrap tracking-widest uppercase pointer-events-none shadow-lg flex items-center gap-1"
+                      style={{ background: 'var(--accent)', color: '#fff' }}
+                    >
+                      {isActive && hovered === null && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+                      {isActive && hovered === null ? `You are here: ${item.name}` : item.name}
+                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45" style={{ background: 'var(--accent)' }} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </a>
             );
           })}
         </nav>
 
         <div className="flex items-center gap-2">
-          {/* Hidden Google Translate mount point */}
           <div id="google_translate_element" className="hidden" />
           <ThemeCog theme={theme} setTheme={setTheme} cursor={cursor} setCursor={setCursor} lang={lang} setLang={setLang} />
           <button onClick={onDownloadResume} className="text-xs font-semibold px-5 py-2 rounded-full transition" style={{ background: 'var(--accent)', color: '#fff' }}>
@@ -431,13 +724,12 @@ function Navbar({ onDownloadResume }:{ onDownloadResume:()=>void }) {
           </button>
         </div>
       </div>
-      {/* Active section progress label (mobile + clarity) */}
       <ActiveSectionBadge activeId={activeId} />
     </header>
   );
 }
 
-function ActiveSectionBadge({ activeId }:{ activeId: string }) {
+function ActiveSectionBadge({ activeId }: { activeId: string }) {
   const item = NAV_ITEMS.find(n => n.href.replace('#', '') === activeId);
   if (!item) return null;
   return (
@@ -453,9 +745,9 @@ function ActiveSectionBadge({ activeId }:{ activeId: string }) {
 // ————————————————————————————————————
 // REUSABLE PAPER BACKGROUND
 // ————————————————————————————————————
-function Paper({ children, tight=false, className='' }:{ children?: React.ReactNode; tight?: boolean; className?: string }) {
+function Paper({ children, tight = false, className = '' }: { children?: React.ReactNode; tight?: boolean; className?: string }) {
   return (
-    <div className={`relative ${tight?'':'px-6'} ${className}`} style={{ background: 'var(--paper-bg)' }}>
+    <div className={`relative ${tight ? '' : 'px-6'} ${className}`} style={{ background: 'var(--paper-bg)' }}>
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0" style={{ background: 'var(--paper-bg)' }} />
         <div className="absolute inset-0 opacity-[0.10]" style={{ backgroundImage: `repeating-linear-gradient(to bottom, var(--paper-line) 0px, var(--paper-line) 1px, transparent 1px, transparent 28px)` }} />
@@ -467,7 +759,7 @@ function Paper({ children, tight=false, className='' }:{ children?: React.ReactN
   );
 }
 
-function Reveal({ children, delay=0, className='' }:{ children: React.ReactNode; delay?:number; className?:string }) {
+function Reveal({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
   return (
     <motion.div initial={{ y: 60, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true, margin: '-80px' }} transition={{ duration: 0.7, ease: 'easeOut', delay }} className={className}>
       {children}
@@ -478,22 +770,22 @@ function Reveal({ children, delay=0, className='' }:{ children: React.ReactNode;
 // ————————————————————————————————————
 // PROJECTS DATA
 // ————————————————————————————————————
-
-type P = {id:string; title:string; desc:string; img:string; tags:string[]; features:string[]; figma?:string};
+type P = { id: string; title: string; desc: string; img: string; tags: string[]; features: string[]; figma?: string; link?: string };
 
 const PROJECTS: P[] = [
-  {id:'mab', title:'MAB AI', desc:'AI examination marking platform.', img:IMG.mab, tags:['AI','Education','Python'], features:['Automatic marking','Guide generation','Exam storage','Analytics']},
-  {id:'cmd', title:'AdelTe Commander', desc:'Private desktop command center.', img:IMG.cmd, tags:['Desktop','Automation'], features:['Voice commands','Automation','Security','Keyboard shortcuts','System mgmt']},
-  {id:'rw',  title:'Visit Rwanda', desc:'Tourism ecosystem platform.', img:IMG.rw, tags:['Tourism','Vue'], features:['Destinations','Hotels','Activities','Booking']},
-  {id:'lux', title:'Luxury Marketplace', desc:'Real estate + social.', img:IMG.lux, tags:['Marketplace','Real Estate'], features:['Luxury villas','Social','Story sharing','Video','Investment']},
-  {id:'kb',  title:'Virtual Keyboard', desc:'Custom keyboard with emoji.', img:IMG.kb, tags:['UI','JS'], features:['Dark mode','Emoji picker','Copy/Paste','Languages','Sound effects']},
-  {id:'cloud',title:'Secure Cloud Storage', desc:'Google Drive-style platform.', img:IMG.cloud, tags:['Cloud','Node.js'], features:['Long-term storage','Email access','File management']},
-  {id:'job', title:'Job Portal', desc:'Full hiring platform.', img:IMG.job, tags:['Portal','Dashboard'], features:['Job posting','Applications','Admin','Candidate mgmt']},
-  {id:'game',title:'3D RPG', desc:'Three.js multiplayer RPG.', img:IMG.game, tags:['Three.js','Multiplayer'], features:['Missions','XP','Animations','Warehouse env']},
-  {id:'f1',  title:'SOS School Page', desc:'Figma prototype.', img:IMG.f1, tags:['Figma','UI/UX'], features:['Student dashboard','Announcements','Schedule'], figma:'https://www.figma.com/proto/pDFzhFctoM66kNdNQrLwmf/sos-school-page?node-id=1-2&starting-point-node-id=1%3A2'},
-  {id:'f2',  title:'Design System', desc:'Figma components.', img:IMG.f2, tags:['Figma','Design System'], features:['Components','Tokens','Variants','Auto-layout'], figma:'https://www.figma.com/proto/2mXMlWPSPHGfxX22Jhk0xq/Untitled?node-id=3-1031'},
-  {id:'f3',  title:'Untitled App Concept', desc:'Modern concept.', img:IMG.f3, tags:['Figma','Concept'], features:['Onboarding','Notebook UI','Interactions'], figma:'https://www.figma.com/design/5HmgXxaIHzOtTeKc6u9vou/Untitled?node-id=0-1&p=f&t=lVUaVpzmakH6XTBY-0'},
-  {id:'ai',  title:'AI Exam Marking', desc:'Advanced AI integration.', img:IMG.ai, tags:['AI','Automation'], features:['Prompt engineering','AI integration','Exam marking','Analytics']},
+  { id: 'mab', title: 'MAB AI', desc: 'AI examination marking platform.', img: IMG.mab, tags: ['AI', 'Education', 'Python'], features: ['Automatic marking', 'Guide generation', 'Exam storage', 'Analytics'] },
+  { id: 'cmd', title: 'AdelTe Commander', desc: 'Private desktop command center.', img: IMG.cmd, tags: ['Desktop', 'Automation'], features: ['Voice commands', 'Automation', 'Security', 'Keyboard shortcuts', 'System mgmt'] },
+  // ✅ Visit Rwanda — has link that opens in new tab
+  { id: 'rw', title: 'Visit Rwanda', desc: 'Tourism ecosystem platform.', img: IMG.rw, tags: ['Tourism', 'Vue'], features: ['Destinations', 'Hotels', 'Activities', 'Booking'], link: 'https://visitrwanda-seven.vercel.app/' },
+  { id: 'lux', title: 'Luxury Marketplace', desc: 'Real estate + social.', img: IMG.lux, tags: ['Marketplace', 'Real Estate'], features: ['Luxury villas', 'Social', 'Story sharing', 'Video', 'Investment'], link: 'http://luxury-properties-eta.vercel.app/' },
+  { id: 'kb', title: 'Virtual Keyboard', desc: 'Custom keyboard with emoji.', img: IMG.kb, tags: ['UI', 'JS'], features: ['Dark mode', 'Emoji picker', 'Copy/Paste', 'Languages', 'Sound effects'] },
+  { id: 'cloud', title: 'Secure Cloud Storage', desc: 'Google Drive-style platform.', img: IMG.cloud, tags: ['Cloud', 'Node.js'], features: ['Long-term storage', 'Email access', 'File management'] },
+  { id: 'job', title: 'Job Portal', desc: 'Full hiring platform.', img: IMG.job, tags: ['Portal', 'Dashboard'], features: ['Job posting', 'Applications', 'Admin', 'Candidate mgmt'] },
+  { id: 'game', title: '3D RPG', desc: 'Three.js multiplayer RPG.', img: IMG.game, tags: ['Three.js', 'Multiplayer'], features: ['Missions', 'XP', 'Animations', 'Warehouse env'] },
+  { id: 'f1', title: 'SOS School Page', desc: 'Figma prototype.', img: IMG.f1, tags: ['Figma', 'UI/UX'], features: ['Student dashboard', 'Announcements', 'Schedule'], figma: 'https://www.figma.com/proto/pDFzhFctoM66kNdNQrLwmf/sos-school-page?node-id=1-2&starting-point-node-id=1%3A2' },
+  { id: 'f2', title: 'Design System', desc: 'Figma components.', img: IMG.f2, tags: ['Figma', 'Design System'], features: ['Components', 'Tokens', 'Variants', 'Auto-layout'], figma: 'https://www.figma.com/proto/2mXMlWPSPHGfxX22Jhk0xq/Untitled?node-id=3-1031' },
+  { id: 'f3', title: 'Untitled App Concept', desc: 'Modern concept.', img: IMG.f3, tags: ['Figma', 'Concept'], features: ['Onboarding', 'Notebook UI', 'Interactions'], figma: 'https://www.figma.com/design/5HmgXxaIHzOtTeKc6u9vou/Untitled?node-id=0-1&p=f&t=lVUaVpzmakH6XTBY-0' },
+  { id: 'ai', title: 'AI Exam Marking', desc: 'Advanced AI integration.', img: IMG.ai, tags: ['AI', 'Automation'], features: ['Prompt engineering', 'AI integration', 'Exam marking', 'Analytics'] },
 ];
 
 // ————————————————————————————————————
@@ -501,17 +793,17 @@ const PROJECTS: P[] = [
 // ————————————————————————————————————
 export default function App() {
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState<P|null>(null);
+  const [modal, setModal] = useState<P | null>(null);
 
-  useEffect(()=> {
-    const t = setTimeout(()=>setLoading(false), 1000);
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 1000);
     return () => clearTimeout(t);
-  },[]);
+  }, []);
 
   const downloadResume = () => {
     const content = `ADELTE — Software Developer | AI Builder | Platform Architect | Digital Innovator\n\nRwanda\nEmail: mloaze778@gmail.com\nPhone: 0722635461\nGitHub: github.com/ADELTE-Boncoeur\n\nWelcome to AdelTe Industries. Building the Future Through Code.\n\nProjects: MAB AI, AdelTe Commander, Visit Rwanda, Luxury Marketplace, Virtual Keyboard, Cloud Storage, Job Portal, 3D RPG, Figma Prototypes, AI Exam Marking.`;
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([content], {type:'text/plain'}));
+    a.href = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
     a.download = 'ADELTE_Resume.txt'; a.click();
   };
 
@@ -520,9 +812,9 @@ export default function App() {
       {/* LOADER */}
       <AnimatePresence>
         {loading && (
-          <motion.div initial={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-[200] bg-[#fefcf6] flex items-center justify-center">
+          <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-[#fefcf6] flex items-center justify-center">
             <div className="text-center">
-              <div className="w-20 h-20 mx-auto mb-6 border-[12px] border-indigo-200 border-t-indigo-700 rounded-full animate-spin"/>
+              <div className="w-20 h-20 mx-auto mb-6 border-[12px] border-indigo-200 border-t-indigo-700 rounded-full animate-spin" />
               <div className="font-black text-3xl tracking-tighter">ADELTE</div>
               <div className="text-indigo-600 text-sm font-mono mt-1">LOADING DIGITAL ENGINEER'S NOTEBOOK...</div>
             </div>
@@ -532,49 +824,66 @@ export default function App() {
 
       <Navbar onDownloadResume={downloadResume} />
 
-      {/* HERO — extreme 3D shadows + animations */}
+      {/* ————— HERO ————— */}
       <section id="top" className="min-h-[100dvh] relative flex items-center justify-center pt-20 overflow-hidden">
         <Paper>
-          <div className="absolute inset-0 bg-[radial-gradient(#64748b_0.6px,transparent_1px)] bg-[length:4px_4px] opacity-[0.04]"/>
+          <div className="absolute inset-0 bg-[radial-gradient(#64748b_0.6px,transparent_1px)] bg-[length:4px_4px] opacity-[0.04]" />
           <div className="absolute inset-0 pointer-events-none">
-            {Array.from({length:10}).map((_,i)=>(
-              <motion.div key={i} className="absolute text-[11px] text-indigo-800/25 font-mono px-3 py-1 border border-indigo-200/60 bg-white/50 rounded" style={{left:`${12+i*8}%`,top:`${20+(i%3)*22}%`}} animate={{y:[0,-28,0], rotate:[i%2===0?-10:8, i%2===0?5:-9, i%2===0?-10:8]}} transition={{duration:6+i*0.7, repeat:Infinity}}>
-                {i%3===0?'Welcome to AdelTe Industries':i%3===1?'function build() {}':'print("ADELTE")'}
+            {Array.from({ length: 10 }).map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute text-[11px] text-indigo-800/25 font-mono px-3 py-1 border border-indigo-200/60 bg-white/50 rounded"
+                style={{ left: `${12 + i * 8}%`, top: `${20 + (i % 3) * 22}%` }}
+                animate={{ y: [0, -28, 0], rotate: [i % 2 === 0 ? -10 : 8, i % 2 === 0 ? 5 : -9, i % 2 === 0 ? -10 : 8] }}
+                transition={{ duration: 6 + i * 0.7, repeat: Infinity }}
+              >
+                {i % 3 === 0 ? 'Welcome to AdelTe Industries' : i % 3 === 1 ? 'function build() {}' : 'print("ADELTE")'}
               </motion.div>
             ))}
           </div>
 
-          <div className="relative px-6 max-w-6xl py-16">
-            <div className="grid items-center gap-10 lg:grid-cols-[1.15fr,0.85fr]">
-              <div className="space-y-6 text-left">
-                <div className="inline-block rounded-full border border-indigo-200 bg-white/70 px-5 py-1 text-xs tracking-widest font-semibold text-indigo-700">RWANDA • 2025–2026</div>
-                <h1 className="hero-title text-[72px] md:text-[96px] lg:text-[110px] font-black tracking-[-5px] leading-none mb-3 text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-600">ADELTE</h1>
-                <div className="hero-subtitle text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-slate-800 to-indigo-700">Building the Future Through Code</div>
+          <div className="relative px-6 max-w-6xl py-12">
+            {/*
+              ✅ LAYOUT: LEFT = info text | RIGHT = profile image + code writer
+              Image is on RIGHT side, NOT centered
+            */}
+            {/*
+              LAYOUT: 3 columns tight, no gap waste
+              [LEFT: all text info] [MID: photo] [RIGHT: code writer fills full height]
+            */}
+            {/* ── 2-column hero: LEFT = text info, RIGHT = photo + code writer side by side ── */}
+            <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
 
-                <div className="mt-6 flex flex-wrap gap-2">
-                  {['Software Developer','AI Builder','Platform Architect','Digital Innovator'].map(t => (
-                    <div key={t} className="px-4 py-2 rounded-full text-sm font-medium border border-slate-200 bg-slate-50 text-slate-900">{t}</div>
+              {/* ——— LEFT: text info ——— */}
+              <div style={{ flex: '1 1 0', minWidth: 0 }} className="space-y-4 text-left">
+                <div className="inline-block rounded-full border border-indigo-200 bg-white/70 px-4 py-1 text-[10px] tracking-widest font-semibold text-indigo-700">RWANDA • 2025–2026</div>
+                <h1 className="hero-title text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-none mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-600">ADELTE</h1>
+                <div className="hero-subtitle text-lg md:text-xl font-bold tracking-tight text-slate-800">Building the Future Through Code</div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {['Software Developer', 'AI Builder', 'Platform Architect'].map(t => (
+                    <div key={t} className="px-3 py-1 rounded-full text-xs font-medium border border-slate-200 bg-slate-50 text-slate-900">{t}</div>
                   ))}
                 </div>
 
-                <div className="mt-8 rounded-[2rem] border border-slate-200 bg-slate-50/90 p-6 shadow-sm">
-                  <div className="text-sm uppercase tracking-[0.35em] text-slate-500 mb-4">Core coding languages</div>
-                  <div className="flex flex-wrap gap-2">
+                <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/90 p-4 shadow-sm">
+                  <div className="text-xs uppercase tracking-[0.2em] text-slate-500 mb-3">Languages</div>
+                  <div className="flex flex-wrap gap-1.5">
                     {CODE_LANGUAGES.map(lang => (
-                      <span key={lang} className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm">{lang}</span>
+                      <span key={lang} className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">{lang}</span>
                     ))}
                   </div>
                 </div>
 
-                <div className="mt-6 flex flex-wrap items-center gap-3">
-                  <a href="#projects" className="hero-shadow px-9 py-3.5 rounded-full font-semibold text-sm transition" style={{ background: 'var(--accent)', color: '#fff' }}>VIEW 12 PROJECTS</a>
-                  <a href="#contact" className="px-9 py-3.5 rounded-full border-2 font-semibold text-sm transition" style={{ borderColor: 'var(--text)', color: 'var(--text)' }}>LET'S TALK</a>
-                  <button onClick={downloadResume} className="px-9 py-3.5 rounded-full border font-semibold text-sm transition" style={{ background: 'var(--card-bg)', borderColor: 'var(--border)', color: 'var(--text)' }}>DOWNLOAD RESUME</button>
+                <div className="mt-6 flex flex-wrap items-center gap-2">
+                  <a href="#projects" className="hero-shadow px-6 py-2.5 rounded-full font-semibold text-xs transition" style={{ background: 'var(--accent)', color: '#fff' }}>VIEW PROJECTS</a>
+                  <a href="#contact" className="px-6 py-2.5 rounded-full border-2 font-semibold text-xs transition" style={{ borderColor: 'var(--text)', color: 'var(--text)' }}>LET'S TALK</a>
+                  <button onClick={downloadResume} className="px-6 py-2.5 rounded-full border font-semibold text-xs transition" style={{ background: 'var(--card-bg)', borderColor: 'var(--border)', color: 'var(--text)' }}>RESUME</button>
                 </div>
 
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className="mt-5 grid gap-2 sm:grid-cols-2">
                   {SPOKEN_LANGUAGES.map(item => (
-                    <div key={item.name} className="rounded-full border border-slate-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <div key={item.name} className="rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-900 flex items-center gap-2">
                       <span>{item.flag}</span>
                       <span>{item.name}</span>
                     </div>
@@ -582,17 +891,70 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="rounded-[2rem] overflow-hidden border border-slate-200 bg-slate-100 shadow-2xl">
-                <img src={PROFILE} alt="AdelTe" className="object-cover w-full h-full min-h-[480px]" />
+              {/* ——— RIGHT: photo + code writer on ONE horizontal line inside one gradient card ——— */}
+              <div style={{
+                flex: '0 0 520px',
+                width: '520px',
+                // gradient border wrapper
+                background: 'linear-gradient(135deg, #6366f1, #8b5cf6, #06b6d4)',
+                borderRadius: '20px',
+                padding: '3px',
+                boxShadow: '0 8px 40px rgba(99,102,241,0.28), 0 2px 12px rgba(139,92,246,0.18)',
+              }}>
+                {/* inner card — one row: photo | divider | code writer */}
+                <div style={{
+                  borderRadius: '18px',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'row',
+                  height: '420px',
+                  background: 'linear-gradient(160deg, #0f0c29, #1a1040, #0d1117)',
+                }}>
+
+                  {/* Photo — fixed width, full height */}
+                  <div style={{
+                    width: '160px',
+                    flexShrink: 0,
+                    overflow: 'hidden',
+                    position: 'relative',
+                  }}>
+                    <img
+                      src={PROFILE}
+                      alt="AdelTe"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: 'center top',
+                        display: 'block',
+                      }}
+                    />
+                    {/* gradient overlay on photo so it blends into code side */}
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'linear-gradient(to right, transparent 55%, #0d1117 100%)',
+                      pointerEvents: 'none',
+                    }} />
+                  </div>
+
+                  {/* Code writer — fills remaining width, same height */}
+                  <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                    <InfiniteCodeWriterFull />
+                  </div>
+
+                </div>
               </div>
+
             </div>
 
-            <div className="logo-marquee mt-12 rounded-[3rem] border border-slate-200 bg-white/90 px-4 py-4 shadow-sm overflow-hidden">
-              <div className="logo-marquee-track flex items-center gap-6">
+            {/* Tech logo marquee */}
+            <div className="logo-marquee mt-8 rounded-2xl border border-slate-200 bg-white/90 px-3 py-3 shadow-sm overflow-hidden">
+              <div className="logo-marquee-track flex items-center gap-4">
                 {CODE_LOGOS.concat(CODE_LOGOS).map((logo, index) => (
-                  <div key={`${logo.name}-${index}`} className="flex min-w-[200px] items-center gap-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm">
-                    <img src={logo.src} alt={logo.name} className="h-10 w-10" />
-                    <span className="text-sm font-semibold text-slate-700">{logo.name}</span>
+                  <div key={`${logo.name}-${index}`} className="flex min-w-[160px] items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 shadow-sm">
+                    <img src={logo.src} alt={logo.name} className="h-8 w-8" />
+                    <span className="text-xs font-semibold text-slate-700">{logo.name}</span>
                   </div>
                 ))}
               </div>
@@ -637,6 +999,7 @@ export default function App() {
         </Reveal>
       </section>
 
+      {/* SKILLS */}
       <section id="skills" className="py-20 bg-gradient-to-b from-white to-indigo-50 px-6">
         <div className="max-w-[1200px] mx-auto">
           <div className="text-center mb-12">
@@ -668,6 +1031,7 @@ export default function App() {
         </div>
       </section>
 
+      {/* PROJECTS */}
       <section id="projects" className="px-6 py-20 bg-white">
         <div className="max-w-[1200px] mx-auto">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10">
@@ -677,7 +1041,7 @@ export default function App() {
             </div>
             <p className="max-w-xl text-slate-500">A modern portfolio of platforms, AI systems, and product experiences with polished visuals, clear outcomes, and strong technical execution.</p>
           </div>
-          <div className="grid gap-7 md:grid-cols-2 lg:grid-cols-3" style={{perspective:'1200px'}}>
+          <div className="grid gap-7 md:grid-cols-2 lg:grid-cols-3" style={{ perspective: '1200px' }}>
             {PROJECTS.map((p, i) => (
               <Reveal key={p.id} delay={i * 0.03}>
                 <Tilt3D className="transition">
@@ -696,8 +1060,20 @@ export default function App() {
                       <div className="flex flex-wrap gap-2 text-xs text-slate-500 mb-6">{p.features.slice(0, 3).map(feature => <span key={feature}>• {feature}</span>)}</div>
                       <div className="flex gap-3 flex-wrap">
                         <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">View details</button>
+                        {/* ✅ Visit Rwanda + Luxury Marketplace get "Visit Site" button opening new tab */}
+                        {p.link && (
+                          <a
+                            href={p.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="rounded-full border border-emerald-500 bg-emerald-50 px-5 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-600 hover:text-white"
+                          >
+                            Visit Site ↗
+                          </a>
+                        )}
                         {p.figma && (
-                          <a href={p.figma} target="_blank" onClick={e => e.stopPropagation()} className="rounded-full border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Open Figma</a>
+                          <a href={p.figma} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="rounded-full border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Open Figma</a>
                         )}
                       </div>
                     </div>
@@ -709,6 +1085,7 @@ export default function App() {
         </div>
       </section>
 
+      {/* CONTACT */}
       <section id="contact" className="bg-slate-900 py-24 px-6 text-white">
         <div className="max-w-[1100px] mx-auto grid md:grid-cols-2 gap-16 items-center">
           <div>
@@ -717,7 +1094,11 @@ export default function App() {
             <p className="max-w-xl text-slate-300 text-lg leading-8">If you want elegant interfaces, smart automation, or a platform with real business impact, I deliver thoughtful design and strong engineering.</p>
           </div>
           <div className="space-y-5 rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
-            {[['Email', 'mloaze778@gmail.com', 'mailto:mloaze778@gmail.com'], ['Phone', '0722635461', 'tel:0722635461'], ['GitHub', 'ADELTE-Boncoeur', 'https://github.com/ADELTE-Boncoeur']].map(([label, value, href]) => (
+            {[
+              ['Email', 'mloaze778@gmail.com', 'mailto:mloaze778@gmail.com'],
+              ['Phone', '0722635461', 'tel:0722635461'],
+              ['GitHub', 'ADELTE-Boncoeur', 'https://github.com/ADELTE-Boncoeur'],
+            ].map(([label, value, href]) => (
               <a key={label} href={href} target="_blank" className="block rounded-3xl border border-white/10 px-5 py-4 transition hover:bg-white/10">
                 <div className="text-xs uppercase tracking-[0.35em] text-slate-400">{label}</div>
                 <div className="mt-2 text-lg font-semibold text-white">{value}</div>
@@ -733,9 +1114,15 @@ export default function App() {
       {/* MODAL */}
       <AnimatePresence>
         {modal && (
-          <div className="fixed inset-0 bg-black/70 z-[150] flex items-center justify-center p-4" onClick={()=>setModal(null)}>
-            <motion.div initial={{scale:0.9,opacity:0}} animate={{scale:1,opacity:1}} exit={{scale:0.96,opacity:0}} onClick={e=>e.stopPropagation()} className="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl">
-              <img src={modal.img} className="w-full" alt=""/>
+          <div className="fixed inset-0 bg-black/70 z-[150] flex items-center justify-center p-4" onClick={() => setModal(null)}>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl"
+            >
+              <img src={modal.img} className="w-full" alt="" />
               <div className="p-8">
                 <div className="font-black text-4xl tracking-tighter mb-1">{modal.title}</div>
                 <div className="text-slate-600 mb-6">{modal.desc}</div>
@@ -743,10 +1130,23 @@ export default function App() {
                   <div className="font-semibold mb-2">Key features</div>
                   <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">{modal.features.map(feature => <li key={feature}>• {feature}</li>)}</ul>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <button onClick={()=>setModal(null)} className="rounded-full border border-slate-300 py-3 text-sm font-semibold">Close</button>
-                  {modal.figma && <a href={modal.figma} target="_blank" className="rounded-full bg-indigo-600 py-3 text-center text-sm font-semibold text-white">Open Figma</a>}
-                  <a href="#contact" onClick={()=>setModal(null)} className="rounded-full bg-slate-900 py-3 text-center text-sm font-semibold text-white">Contact me</a>
+                <div className="flex gap-3 flex-wrap">
+                  <button onClick={() => setModal(null)} className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold">Close</button>
+                  {/* ✅ Visit Site opens in new tab */}
+                  {modal.link && (
+                    <a
+                      href={modal.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-full bg-emerald-600 px-6 py-3 text-center text-sm font-semibold text-white hover:bg-emerald-700"
+                    >
+                      Visit Site ↗
+                    </a>
+                  )}
+                  {modal.figma && (
+                    <a href={modal.figma} target="_blank" rel="noopener noreferrer" className="rounded-full bg-indigo-600 px-6 py-3 text-center text-sm font-semibold text-white hover:bg-indigo-700">Open Figma</a>
+                  )}
+                  <a href="#contact" onClick={() => setModal(null)} className="rounded-full bg-slate-900 px-6 py-3 text-center text-sm font-semibold text-white hover:bg-slate-800">Contact me</a>
                 </div>
               </div>
             </motion.div>
@@ -756,4 +1156,3 @@ export default function App() {
     </div>
   );
 }
-
